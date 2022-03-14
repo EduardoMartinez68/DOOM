@@ -1,0 +1,314 @@
+#inferfaz 3d
+from ursina import *
+from ursina.prefabs.first_person_controller import FirstPersonController #para ver el mundo en 3d
+#traer cosas
+import os
+
+#importar imagenes
+BASE_DIR=os.path.dirname(os.path.abspath(__file__))
+ICON_DIR=os.path.join(BASE_DIR,'sprite')
+
+BTC_ICON=os.path.join(ICON_DIR,'escopeta.png')
+
+
+#activar el juego
+app=Ursina()
+
+#leer las imagenes
+textura_cielo=load_texture('background/cielo.png')
+
+''''--------jugador-------'''
+#crear un jugador
+newPlayer=FirstPersonController()
+
+''''--------objetos y caracteristicas niveles-------'''
+class Voxel(Button):
+    sprite_index=load_texture('bloques/bloque_nave.png')
+
+    def __init__(self,position=(0,0,0),escala=(0,0)):
+        super().__init__(
+              parent=scene,
+              position=position,
+              model='cube',
+              origin_y=0.5,
+              collider='box',
+              texture=self.sprite_index, #'white_cube',
+              color=color.color(0,0,random.uniform(0.9,1)), #color aleatorio del piso
+              scale=escala,
+              highlight_color=color.lime   #color cuando el maus pasa cerca de el
+              )
+
+    #si esta apuntandome con su mano
+    ''''
+    def input(self,key):
+        if self.hovered:
+            #añadir un bloque
+            if key=='left mouse down':
+                voxel=Voxel(position=self.position+mouse.normal)
+
+            #eliminar un bloque
+            if key=='right mouse down':
+                destroy(self)
+    '''
+
+class cielo(Entity):
+    def __init__(self):
+        super().__init__(
+            parent=scene,
+            model='sphere',
+            texture=textura_cielo,
+            scale=150,
+            double_sided=True)
+
+
+
+''''----------------------jugador---------------------'''
+class mano(Entity):
+    xInicio=0
+    yInicio=-0.4
+    #animacion de movimiento
+    lado='derecha'
+    image_speed=0.1
+    #animacion recarca
+    imagen_movimiento=True
+
+    image_index=0
+    sprite='sprite/escopeta/escopeta0'
+    textura_mano=load_texture(sprite)
+
+
+    def __init__(self):
+        super().__init__(
+            parent=camera.ui,
+            model='cube',
+            texture=self.textura_mano,
+            scale=0.4,
+            color=color.white,
+            rotation=Vec3(0,0,0), #girar la arma
+            position=Vec2(self.xInicio,self.yInicio) #posiciones (x,y)
+        )
+    #si esta apuntandome con su mano
+    def input(self,key):
+        if key=='left mouse down':
+            self.imagen_movimiento=0
+
+
+
+
+''''----------------------enemigo---------------------'''
+class enemigo(Button):
+    sprite_index='sprite/billy/sprite_billy_0.png'
+    image_index=0
+    image_speed=0
+    direction=0
+    velocidad=0
+    vida=0
+    poder_ataque=0
+    
+    def __init__(self,position=(0,0,0)):
+        super().__init__(
+            parent=scene,
+            position=position,
+            model='quad',
+            collider='box',
+            collision_cooldown=1,
+            origin_y=0.5,
+            rotation=Vec3(0,newPlayer.rotation[1],0),
+            texture=self.sprite_index, #'white_cube',
+            scale=(2,3),
+            color=color.white   #color.red
+        )
+
+''''----------------------objetos---------------------'''
+class bala(Entity):
+    #animacion de movimiento
+    sprite_index=load_texture('balas/bala_fuego.png')  #'white_circle' #load_texture()
+    image_speed=0.1
+    image_index=0
+
+    def __init__(self,position=(0,0,0)):
+        super().__init__(
+            parent=scene,
+            position=position,
+            model='sphere',
+            collider='box',
+            texture='white_sphere', #self.sprite_index,
+            scale=0.4,
+            color=color.color(17,17,245),
+            rotation=Vec3(0,0,0) #girar la bala
+        )
+
+''''----------------------Niveles---------------------'''
+#niveles
+techo1=[
+        [0,0,0,0,0,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,8,8],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,8,8],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,8,8],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,0,0]
+       ]
+
+nivel1= [
+        [0,0,0,0,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,5,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,5,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,5,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,5,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,5,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+       ]
+
+
+cajaEnemigos=[]
+def crearNivel(nivel,nivel2):
+
+    #obtener medidas de la sala
+    largoHabitacion=len(nivel)
+    anchoHabitacion=len(nivel[0])
+    xInicio=anchoHabitacion/2
+
+    #crear la sala
+    for z in range(largoHabitacion):
+        piso=nivel[z]
+        techo=nivel2[z]
+        #crar el suelo
+        voxel=Voxel(position=(xInicio,0,z),escala=(anchoHabitacion,1))
+        #creamos los blouqes con su altura
+        for x in range(anchoHabitacion):
+            #si el suelo puede crecer mas hacerlo
+            if piso[x]>0:
+                voxel=Voxel(position=(x,piso[x],z),escala=(1,piso[x]))
+
+            #si hay techo ponerlo
+            if techo[x]>0:
+                voxel=Voxel(position=(x,techo[x],z),escala=(1,1))
+
+            #crear enemigo
+            if piso[x]<0:
+                cajaEnemigos.append(enemigo(position=(x,3,z)))
+
+    newCielo=cielo()
+
+manoPlayer=mano()
+balas=bala(position=(12,1.5,14))
+
+crearNivel(nivel1,techo1)
+
+
+''''--------Actualizar datos que se tengan que estar repitiendo-------'''
+def update():
+    '''------pistola'''
+    #si estas pulsando una tecla hacer animacion
+    if (held_keys['a'] or held_keys['d'] or held_keys['w'] or held_keys['s']) and manoPlayer.imagen_movimiento==True:
+        limit=0.25
+        animacion=0.8*time.dt
+
+        #animacion a la derecha
+        if (manoPlayer.lado=='derecha'):
+            if (manoPlayer.x<limit):
+                 manoPlayer.x+=animacion
+            else:
+                manoPlayer.lado='izquierda'
+        #animacion a la izquierda
+        elif (manoPlayer.lado=='izquierda'):
+            if (manoPlayer.x>-limit):
+                 manoPlayer.x-=animacion
+                 manoPlayer.y+=manoPlayer.image_speed*time.dt
+                 manoPlayer.y+= manoPlayer.image_speed*time.dt
+            else:
+                manoPlayer.lado='derecha'
+
+        #animacion de arriba y abajo
+        manoPlayer.y=abs(manoPlayer.x)-0.6 #manoPlayer.animacion*time.dt
+
+    else:
+         manoPlayer.x=manoPlayer.xInicio
+         manoPlayer.y=manoPlayer.yInicio
+         manoPlayer.animacion=0.5
+         manoPlayer.lado='derecha'
+
+    #animacion de disparar
+    if (manoPlayer.imagen_movimiento==False):
+        if(manoPlayer.image_index<8):
+            manoPlayer.image_index+=0.5
+            manoPlayer.sprite='sprite/escopeta/escopeta{}.png'.format(floor(manoPlayer.image_index))
+            manoPlayer.textura_mano=load_texture(manoPlayer.sprite)
+            manoPlayer.texture=manoPlayer.textura_mano
+        else:
+            manoPlayer.imagen_movimiento=True
+
+            manoPlayer.image_index=0
+            manoPlayer.sprite='sprite/escopeta/escopeta0.png'
+            manoPlayer.textura_mano=load_texture(manoPlayer.sprite)
+            manoPlayer.texture=manoPlayer.textura_mano
+
+
+
+    '''------enemigos'''
+    #actualizar a los enemigos en pantalla
+    for enemigos in cajaEnemigos:
+        #actualizar la vista del enemigos
+        enemigos.rotation=(0,newPlayer.rotation[1],0)
+        #sistema de colision
+        info=enemigos.intersects()
+
+        #mover al enemigo contra el jugador
+        nuewX=0
+        nuewY=0
+        nuewZ=0
+        velocidad=1.5*time.dt
+        distancia=3
+        #moverse adelante o atras
+        distanciaX=abs((newPlayer.position.x-enemigos.position.x))
+        if distanciaX>distancia and not info.hit:
+            if (newPlayer.position.x<enemigos.position.x):
+                nuewX=enemigos.position.x-velocidad
+            elif (newPlayer.position.x>enemigos.position.x):
+                nuewX=enemigos.position.x+velocidad
+        else:
+            nuewX=enemigos.position.x
+
+        #moverse derecha a izquierda
+        distanciaZ=abs((newPlayer.position.z-enemigos.position.z))
+        if distanciaZ>distancia and not info.hit:
+            if (newPlayer.position.z<enemigos.position.z):
+                nuewZ=enemigos.position.z-velocidad
+            elif (newPlayer.position.z>enemigos.position.z):
+                nuewZ=enemigos.position.z+velocidad
+        else:
+            nuewZ=enemigos.position.z
+
+        #moverse arriba y abajo
+        nuewY=enemigos.position.y
+        #actualizar la posicion
+        enemigos.position=(nuewX,nuewY,nuewZ)
+
+            #destroy(info.entity)
+
+
+#mantener la pantalla encendida
+app.run()
